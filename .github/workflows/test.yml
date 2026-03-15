@@ -73,10 +73,9 @@ jobs:
 
       - name: Install migrate
         run: |
-          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          echo "$(go env GOPATH)/bin" >> $GITHUB_ENV
-          which migrate
+          "$(go env GOPATH)/bin/migrate" version
 
       - name: Run E2E
         run: ./scripts/run-e2e.sh
