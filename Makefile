@@ -53,18 +53,22 @@ run-dev:
 lint:
 	@command -v golangci-lint >/dev/null 2>&1 && golangci-lint run ./... || go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run ./...
 
-# Run migrations up
+# Run migrations up. Requires: export DATABASE_URL=postgres://...
+# "up" without a version = apply all pending migrations (run to latest schema).
+# Single shell so DATABASE_URL is visible to migrate. Do not use -- (migrate would receive it as arg and show usage).
 migrate-up:
-	migrate -path $(MIGRATIONS) -database "$(DATABASE_URL)" up
+	@(test -n "$${DATABASE_URL}" || (echo "Error: DATABASE_URL is not set. Example: export DATABASE_URL=postgres://user:pass@localhost:5432/grbac" && exit 1)) && \
+	go run -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0 -path "$(CURDIR)/$(MIGRATIONS)" -database "$${DATABASE_URL}" up
 
 # Run migrations down
 migrate-down:
-	migrate -path $(MIGRATIONS) -database "$(DATABASE_URL)" down 1
+	@(test -n "$${DATABASE_URL}" || (echo "Error: DATABASE_URL is not set." && exit 1)) && \
+	go run -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0 -path "$(CURDIR)/$(MIGRATIONS)" -database "$${DATABASE_URL}" down 1
 
 # Create a new migration (usage: make migrate-create name=add_users)
 migrate-create:
 	@test -n "$(name)" || (echo "Usage: make migrate-create name=<migration_name>" && exit 1)
-	migrate create -ext sql -dir $(MIGRATIONS) -seq $(name)
+	go run -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0 create -ext sql -dir "$(CURDIR)/$(MIGRATIONS)" -seq $(name)
 
 # Generate sqlc code (requires sqlc.yaml)
 # Uses go run if sqlc not in PATH
@@ -78,5 +82,5 @@ tidy:
 # Install tools (golangci-lint, migrate, sqlc)
 install-tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
