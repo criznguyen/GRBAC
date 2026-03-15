@@ -17,11 +17,11 @@ This document records the technology choices for the RBAC service. Choices align
 
 | Layer | Technology | Rationale |
 |-------|------------|-----------|
-| **Language / runtime** | To be decided (e.g. Go, Java, Node) | Technical BA / team preference; must support HTTP and gRPC, async audit write, connection pooling to DB and Redis. |
-| **API / framework** | REST + optional gRPC | REST for Admin API and Check Permission; gRPC optional for low-latency check from SDK. Framework: per language (e.g. Go: Gin/Chi; Java: Spring Boot; Node: Express/Fastify). |
+| **Language / runtime** | **Go 1.22+** | Single binary, low memory, p99 < 50ms dễ đạt; scale-down (SME) và scale-up (Enterprise) tốt. See [tech-recommendation-enterprise-sme.md](./tech-recommendation-enterprise-sme.md). |
+| **API / framework** | REST + optional gRPC; **Chi** or **Echo** | REST for Admin API and Check Permission; gRPC optional for low-latency check from SDK. Chi/Echo nhẹ, phù hợp cả SME và Enterprise. |
 | **Policy store** | PostgreSQL | ADR-002: ACID, replication, partitioning; tenant_id on all tables. |
 | **Audit store** | PostgreSQL (separate DB) | ADR-002, ADR-004: append-only, partitioning by time, retention job. |
-| **Cache** | Redis | ADR-003: shared cache for PDP; TTL + invalidation; HA via cluster or Sentinel. |
+| **Cache** | Redis (+ in-memory fallback) | ADR-003: Redis shared cache; TTL + invalidation; HA via cluster or Sentinel. SME single-node: in-memory fallback khi không có Redis. |
 | **Message queue (optional)** | Optional (e.g. Redis Streams, Kafka) | For async audit write and/or cache invalidation events if not in-process. Technical BA to specify. |
 | **IdP integration** | OAuth2 / OIDC (JWT or introspection) | Validate token; read subject (sub) and optional tenant claim. Library per language. |
 | **SDKs** | Node, Go, Java | FR-012: thin clients calling Check Permission API; optional local in-memory cache. |

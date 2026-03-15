@@ -47,51 +47,33 @@ Following HANDOFF-TO-DEV.md §5 and team-breakdown.md §3.2:
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| **Runtime** | Node.js 20+ | Alternative: Go 1.22+ per team preference |
-| **Framework** | Express or Fastify | REST JSON; middleware for auth |
+| **Runtime** | **Go 1.22+** | Recommended for enterprise + SME; single binary, low footprint. See tech-recommendation-enterprise-sme.md |
+| **Framework** | Chi or Echo | REST JSON; middleware for auth |
 | **Policy Store** | PostgreSQL 15+ | ACID, tenant_id on all tables |
 | **Audit Store** | PostgreSQL (separate DB) | Append-only, partitioned |
-| **ORM / Migrations** | node-pg + node-pg-migrate or Prisma | Or: sqlx (Go), Flyway (Java) |
-| **Auth** | JWT validation (jsonwebtoken or jose) | Extract sub, tenant from token |
-| **Validation** | express-validator or Zod | Request validation |
+| **DB layer / Migrations** | sqlc + golang-migrate or Atlas | Type-safe queries, migrations |
+| **Auth** | JWT validation (github.com/golang-jwt/jwt) | Extract sub, tenant from token |
+| **Validation** | go-playground/validator | Request validation |
 
 ---
 
 ## 5. File Structure (Scaffold)
 
 ```
-src/
-├── api/                 # REST endpoints
-│   ├── admin/           # Admin API routes
-│   │   ├── tenants.ts
-│   │   ├── roles.ts
-│   │   ├── permissions.ts
-│   │   └── index.ts
-│   └── index.ts
-├── pdp/                 # Policy Decision Point (future)
-│   └── README.md
-├── audit/               # Audit writer & events
-│   ├── writer.ts
-│   └── types.ts
-├── db/                  # DB layer
-│   ├── policy-store.ts  # Policy Store client
-│   ├── audit-store.ts   # Audit Store client
-│   └── migrations/      # SQL migrations
-│       ├── 001_policy_store.sql
-│       └── 002_audit_store.sql
-├── sdk/                 # SDK packages (future)
-│   └── README.md
-├── middleware/          # Auth, tenant, error handling
-│   ├── auth.ts
-│   └── tenant.ts
-├── services/            # Business logic
-│   ├── tenant.service.ts
-│   ├── role.service.ts
-│   └── permission.service.ts
-├── config/              # Configuration
-│   └── index.ts
-├── app.ts               # Express app setup
-└── server.ts            # Entry point
+cmd/
+├── api/                 # Admin API + PDP entry
+│   └── main.go
+internal/
+├── api/                 # REST handlers
+│   ├── admin/           # tenants, roles, permissions
+│   └── pdp/             # check permission
+├── audit/               # Audit writer
+├── db/                  # sqlc queries + migrations
+│   └── migrations/
+├── middleware/          # Auth, tenant
+├── service/             # Business logic
+└── config/
+pkg/                     # Reusable (cache, jwt)
 ```
 
 ---
@@ -176,7 +158,20 @@ src/
 
 ---
 
-## 10. References
+## 10. How to Run (Slice 0/1)
+
+See **DEV-COMPLETED-SLICE-01.md** for full instructions. Quick start:
+
+```bash
+export DATABASE_URL="postgres://..." JWT_SECRET="..."
+make migrate-up && make build && make run
+```
+
+Smoke test: `SMOKE_TEST_TOKEN=<jwt> ./scripts/smoke-test.sh`
+
+---
+
+## 11. References
 
 - **Technical BA:** `docs/sdlc/ba/technical/HANDOFF-TO-DEV.md`, `api-spec-admin.md`, `db-schema.md`, `team-breakdown.md`
 - **Architecture:** `docs/sdlc/architecture/tech-stack.md`, ADRs 001–005
@@ -184,7 +179,7 @@ src/
 
 ---
 
-## 11. Document History
+## 12. Document History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|

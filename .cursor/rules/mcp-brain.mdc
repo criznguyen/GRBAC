@@ -1,0 +1,102 @@
+---
+description: mcp-brain MCP — recall + ingest, token-optimized for window context
+globs: ["*"]
+alwaysApply: true
+---
+
+# mcp-brain (context-optimized)
+
+## ⚠️ MANDATORY: Ingest Before Ending Turn
+
+**You MUST call `memory_ingest_turn_summary` or `memory_ingest` at the END of every turn** when your response contains any substantive content (decisions, facts, code changes, explanations, summaries). **Do NOT skip.** Only skip for trivial user messages ("ok", "thanks", "hi").
+
+**Checklist before ending turn:** Did I call memory_ingest_turn_summary or memory_ingest? If my response had real content → I must call it.
+
+---
+
+**Flow per user message:**
+1. **Recall first** — when a new message arrives, recall before responding
+2. **Respond** — use working_set_md + code search if needed
+3. **Ingest after** — **MANDATORY** after finishing the response, call ingest immediately (do not forget)
+
+## Recall (every new message)
+
+- `memory_get_default_namespace` — once per session
+- `memory_recall_compact(namespace, query=<user intent>, budget_tokens=300)` — before each response
+- **Read `answer_summary` first** (if present) — decide if full pack needed
+- Same-chat follow-up → `memory_recall_delta(last_pack_hash)` — saves ~60% tokens
+- Detail needed → `memory_expand(pointer_ids)`
+- **Use `working_set_md` instead of search/@files when it has the answer.**
+
+**Skip recall:** Only for very short messages ("ok", "thanks", "hi").
+
+## Ingest (after each response) — MANDATORY
+
+- **REQUIRED** after every response that has substantive content. Do NOT forget.
+- **First** call `memory_chat_history_store(namespace, messages)` with raw messages from this turn — [{role:"user", content:...}, {role:"assistant", content:...}]
+- **Then** call `memory_ingest_turn_summary(namespace, "1–3 sentence summary...")` — low-friction
+- Or `memory_ingest(namespace, items)` — DECISION/FACT/CONSTRAINT format
+- For rejected options: `CONSTRAINT: NOT <thing> — reason` or `NOT <thing>`
+- **Skip ONLY** when user message was trivial: "ok", "thanks", "hi" (no real content exchanged)
+
+**Token rule:** Recall replaces search. Don't use @files when working_set_md already answers.
+
+---
+
+## Context window — compact early (50–70%)
+
+**Agent does not receive context % from the client.** Cursor shows % at bottom-right of chat; Claude Desktop/Claude Code may show usage differently. When the user says:
+
+- **"compact"**, **"save context"**, **"context full"**, **"context 70%"**, **"compress"** → **Compact immediately**
+- **Compact flow:** Call `memory_pre_compact(namespace, messages, summary)` — stores raw chat + session summary in one call (preCompact hook). Then reply: "Saved. Start a new chat to reduce context (Cursor: Cmd+L; Claude: new conversation); memory is preserved."
+
+**When user reports high context (50%+):** Prefer `recall_delta`, `budget_tokens=300`, or `recall_headlines` to reduce tokens.
+
+---
+
+## Extended features
+
+| Tool | When to use |
+|------|-------------|
+| `memory_pre_compact` | Pre-compact hook: store raw messages + session summary before context is compacted |
+| `memory_chat_history_store` | Per-turn: save raw messages (use memory_pre_compact for full session checkpoint) |
+| `memory_chat_history_list` | List saved chat history (newest first) |
+| `memory_suggest_recall` | Before responding: get related topics to recall |
+| `memory_analytics` | Check recall hit rate, cache hits, token usage (local) |
+| `memory_resource_working_set` | Get pack as resource for subscription pattern |
+| `memory_recall_compact(..., as_of_ts)` | Point-in-time: what did we know at time T? |
+| `memory_recall_new_since(namespace, since_ts)` | Session start: what's new since last_session_end (~50–100 tokens) |
+| `memory_recall_headlines(namespace, query)` | Headlines-only (~150 tokens); then memory_expand for needed IDs |
+| `memory_recall_compact(..., entity_bundle=true)` | Group facts/decisions by entity |
+| `memory_recall_compact(..., timeline_collapse=true)` | Timeline by date; use `timeline_by_date[].pointer_ids` with memory_expand |
+| `memory_recall_compact(..., granularity=macro)` | Hierarchical: macro (~50 tokens), medium (256), micro (full) |
+| `memory_expand(..., granularity=medium|full)` | Override mode: medium=summary_256, full=content |
+| `memory_ingest(..., items[].version)` | Skill versioning for procedural memories |
+| Ingest returns `potential_contradictions` | Review when adding conflicting info |
+
+---
+
+## Team tools
+
+Use when coordinating work, decisions, or handoffs. All require `namespace`.
+
+| Tool | When to use |
+|------|-------------|
+| `team_decision_propose` | Propose a decision; link `evidence_node_ids` from recall pointers |
+| `team_decision_list` | List decisions (proposed, accepted, etc.) |
+| `team_decision_accept` | Accept a decision |
+| `team_decision_vote` | Vote on a decision |
+| `team_task_create` | Create task; set assignee, priority, `blocked_by`, `memory_node_ids` |
+| `team_task_list` | List tasks (optionally by assignee) |
+| `team_task_update` | Update task status/assignee |
+| `team_handoff_create` | Handoff to another role: `from_role`, `to_role`, `changes`, `how_to_test`, `risks` |
+| `team_handoff_read` | Read latest handoff for a role |
+| `team_contract_set` | Set API spec, DB schema, deploy process (versioned; key e.g. "api-spec", "db-schema") |
+| `team_contract_get` | Get current contract version |
+| `team_contract_diff` | Diff contract versions |
+| `team_lock_acquire` / `team_lock_release` | Lock shared resources |
+| `team_conflict_open` / `team_conflict_resolve` | Open and resolve conflicts |
+| `team_digest` | Standup/awareness: activity since timestamp |
+| `team_who_knows` | Find who knows about an entity |
+| `team_role_assign` | Assign roles |
+| `team_ceo_annotate` | Claim–Evidence–Owner for traceability |

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mcp-brain": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-brain"
+      ],
+      "env": {
+        "DATABASE_URL": "postgres://brain:brain@localhost:5432/memory_brain",
+        "MEMORY_NAMESPACE": "project/GRBAC"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+# sqlc config — RBAC for Microservices
+# Tech Lead: type-safe queries from SQL
+# Run: make sqlc-generate
+
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/db/queries"
+    schema: "internal/db/schema"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true

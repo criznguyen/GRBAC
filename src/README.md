@@ -29,11 +29,11 @@ This directory contains the RBAC service source code. The structure follows the 
 
 ## 3. Tech Stack
 
-- **Runtime:** Node.js 20+
-- **Framework:** Express or Fastify
+- **Runtime:** Go 1.22+ (per IMPLEMENTATION-PLAN.md)
+- **Framework:** Chi or Echo
 - **Policy Store:** PostgreSQL
 - **Audit Store:** PostgreSQL (separate DB)
-- **Cache:** Redis (for PDP)
+- **Cache:** Redis (in-memory fallback for SME)
 - **Auth:** JWT validation (Bearer token)
 
 ---
