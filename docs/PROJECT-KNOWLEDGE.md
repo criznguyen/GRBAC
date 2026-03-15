@@ -2,7 +2,7 @@
 
 **Mục đích:** Tài liệu tham chiếu tổng hợp cho AI và team. Đọc file này để nắm toàn bộ ngữ cảnh dự án.
 
-**Cập nhật:** 2025-03-15
+**Cập nhật:** 2026-03-15
 
 ---
 
