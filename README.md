@@ -1,92 +1,92 @@
 # GRBAC — RBAC for Microservices
 
-Hệ thống **Role-Based Access Control** tập trung cho kiến trúc microservices: một service authorization, nhiều tenant, đủ tính năng để dùng ngay cho production (enterprise & SME).
+A central **Role-Based Access Control** service for microservices: one authorization service, multi-tenant, production-ready for both enterprise and SME.
 
-## Tính năng (Slice 0/1)
+## Features (Slice 0/1)
 
-- **Tenants** — Tạo tenant, lấy thông tin tenant
-- **Roles** — CRUD role (tên unique theo tenant), list có phân trang
-- **Permissions** — Gán permission cho role (định dạng `resource:action`, hỗ trợ wildcard)
-- **Auth** — JWT (HS256/RS256), header `X-Tenant-ID`
-- **Audit** — Ghi mọi thay đổi role/permission vào `audit_admin`
+- **Tenants** — Create tenant, get tenant by ID
+- **Roles** — CRUD roles (unique name per tenant), paginated list
+- **Permissions** — Assign permissions to roles (`resource:action` format, wildcard supported)
+- **Auth** — JWT (HS256/RS256), `X-Tenant-ID` header
+- **Audit** — All role/permission changes written to `audit_admin`
 
-## Yêu cầu
+## Requirements
 
 - Go 1.22+
 - PostgreSQL 15+
 
-## Chạy nhanh
+## Quick start
 
 ```bash
-# Clone & vào thư mục
+# Clone and enter the repo
 cd GRBAC
 
-# Cài dependency
+# Install dependencies
 go mod tidy
 
-# Migrate DB (cần DATABASE_URL)
+# Run migrations (set DATABASE_URL)
 export DATABASE_URL="postgres://user:pass@localhost:5432/grbac?sslmode=disable"
 make migrate-up
 
-# Build & chạy API
+# Build and run the API
 export JWT_SECRET="your-secret"
 make build && make run
 ```
 
-API lắng nghe mặc định tại `http://localhost:8080`.
+The API listens on `http://localhost:8080` by default.
 
 ## API (base `/api/v1`)
 
-| Method | Path | Mô tả |
-|--------|------|--------|
+| Method | Path | Description |
+|--------|------|-------------|
 | GET | /health | Health check |
-| POST | /tenants | Tạo tenant |
-| GET | /tenants/:id | Lấy tenant |
-| POST | /roles | Tạo role |
+| POST | /tenants | Create tenant |
+| GET | /tenants/:id | Get tenant |
+| POST | /roles | Create role |
 | GET | /roles | List roles (paginated) |
-| GET | /roles/:id | Lấy role |
-| PUT | /roles/:id | Cập nhật role |
-| DELETE | /roles/:id | Xóa role |
-| PUT | /roles/:id/permissions | Thay toàn bộ permissions |
-| PATCH | /roles/:id/permissions | Thêm permissions |
-| DELETE | /roles/:id/permissions | Xóa permissions |
-| GET | /roles/:id/permissions | List permissions của role |
+| GET | /roles/:id | Get role |
+| PUT | /roles/:id | Update role |
+| DELETE | /roles/:id | Delete role |
+| PUT | /roles/:id/permissions | Replace all permissions |
+| PATCH | /roles/:id/permissions | Add permissions |
+| DELETE | /roles/:id/permissions | Remove permissions |
+| GET | /roles/:id/permissions | List role permissions |
 
-**Headers bắt buộc:** `Authorization: Bearer <JWT>`, `X-Tenant-ID: <tenant-uuid>` (trừ POST /tenants).
+**Required headers:** `Authorization: Bearer <JWT>`, `X-Tenant-ID: <tenant-uuid>` (except for POST /tenants).
 
-## Test
+## Testing
 
 ```bash
-make test              # Unit tests (không cần Docker)
-make test-integration  # Integration tests (cần Docker, testcontainers)
+make test              # Unit tests (no Docker)
+make test-integration  # Integration tests (Docker + testcontainers)
 make test-all          # Unit + integration
-make test-e2e          # E2E: Postgres → migrate → API → smoke (cần migrate, jq)
+make test-e2e          # E2E: Postgres → migrate → API → smoke (requires migrate, jq)
 ```
 
-## Cấu trúc thư mục
+## Project structure
 
 ```
-cmd/api/           # Entry point API
-cmd/gen-jwt/       # Công cụ tạo JWT cho smoke/E2E
+cmd/api/           # API entry point
+cmd/gen-jwt/       # JWT generator for smoke/E2E
 internal/
   api/admin/       # Handlers: tenants, roles, permissions
-  audit/           # Ghi audit_admin
-  config/          # Load config từ env
+  audit/           # audit_admin writer
+  config/          # Config from env
   db/              # sqlc, migrations, pool
   middleware/      # Auth, Tenant
   service/         # Business logic
 tests/integration/ # Integration tests (testcontainers)
 scripts/           # smoke-test.sh, run-e2e.sh
-docs/sdlc/         # PRD, FRS, kiến trúc, QE, dev handoff
+docs/sdlc/         # PRD, FRS, architecture, QE, dev handoff
 ```
 
-## Tài liệu
+## Documentation
 
-- **Product & SDLC:** [docs/sdlc/](docs/sdlc/) — PRD, FRS, kiến trúc, API spec, test plan
-- **Dev:** [docs/sdlc/DEV-COMPLETED-SLICE-01.md](docs/sdlc/DEV-COMPLETED-SLICE-01.md) — Tổng kết Slice 0/1, cách chạy
+- **Product & SDLC:** [docs/sdlc/](docs/sdlc/) — PRD, FRS, architecture, API spec, test plan
+- **Dev:** [docs/sdlc/DEV-COMPLETED-SLICE-01.md](docs/sdlc/DEV-COMPLETED-SLICE-01.md) — Slice 0/1 summary and run guide
 - **QE:** [docs/sdlc/qe/QE-AUTOMATION.md](docs/sdlc/qe/QE-AUTOMATION.md) — Test pyramid, CI
 
-## Smoke test (server đang chạy)
+## Smoke test (with server running)
 
 ```bash
 export JWT_SECRET=your-secret
@@ -96,4 +96,4 @@ export SMOKE_TEST_TOKEN=$(go run ./cmd/gen-jwt)
 
 ## License
 
-MIT (hoặc ghi rõ license bạn dùng).
+MIT (or specify your license).

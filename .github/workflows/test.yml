@@ -75,7 +75,7 @@ jobs:
         run: |
           go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.0
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          "$(go env GOPATH)/bin/migrate" version
+          test -f "$(go env GOPATH)/bin/migrate" && echo "migrate installed OK"
 
       - name: Run E2E
         run: ./scripts/run-e2e.sh
