@@ -86,6 +86,22 @@ docs/sdlc/         # PRD, FRS, architecture, QE, dev handoff
 - **Dev:** [docs/sdlc/DEV-COMPLETED-SLICE-01.md](docs/sdlc/DEV-COMPLETED-SLICE-01.md) — Slice 0/1 summary and run guide
 - **QE:** [docs/sdlc/qe/QE-AUTOMATION.md](docs/sdlc/qe/QE-AUTOMATION.md) — Test pyramid, CI
 
+## Docker & Kubernetes
+
+**Docker**
+```bash
+docker build -t grbac-api:latest .
+```
+
+**Docker Compose** (Postgres + migrate + API)
+```bash
+export JWT_SECRET=your-secret   # optional, default: change-me-in-production
+docker compose up -d
+# API: http://localhost:8080
+```
+
+**Kubernetes** — see [k8s/README.md](k8s/README.md) for apply order. Manifests: namespace, ConfigMap, Secret, migration Job, Deployment, Service, optional Ingress.
+
 ## Smoke test (with server running)
 
 ```bash

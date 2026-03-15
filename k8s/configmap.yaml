@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grbac-config
+  namespace: grbac
+  labels:
+    app: grbac
+data:
+  SERVER_ADDR: ":8080"
+  LOG_LEVEL: "info"

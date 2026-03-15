@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grbac-api
+  namespace: grbac
+  labels:
+    app: grbac
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grbac
+  template:
+    metadata:
+      labels:
+        app: grbac
+    spec:
+      containers:
+        - name: api
+          image: grbac-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: grbac-config
+            - secretRef:
+                name: grbac-secret
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

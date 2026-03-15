@@ -1,0 +1,36 @@
+# Run once after creating grbac-migrations ConfigMap:
+#   kubectl create configmap grbac-migrations --from-file=internal/db/migrations/ -n grbac
+# Then: kubectl apply -f k8s/migration-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grbac-migrate
+  namespace: grbac
+  labels:
+    app: grbac
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: migrate/migrate:v4.18.0
+          args:
+            - "-path=/migrations"
+            - "-database=$(DATABASE_URL)"
+            - "up"
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: grbac-secret
+                  key: DATABASE_URL
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+              readOnly: true
+      volumes:
+        - name: migrations
+          configMap:
+            name: grbac-migrations

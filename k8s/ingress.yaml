@@ -1,0 +1,27 @@
+# Optional: enable if you use an Ingress controller (nginx, traefik, etc.)
+# Update host and annotations for your environment.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grbac-api
+  namespace: grbac
+  labels:
+    app: grbac
+  annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grbac.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grbac-api
+                port:
+                  number: 8080
+  # tls:
+  #   - hosts: [grbac.local]
+  #     secretName: grbac-tls
